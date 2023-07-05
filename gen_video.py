@@ -8,8 +8,6 @@
 
 """Generate lerp videos using pretrained network pickle."""
 
-import copy
-import os
 import re
 from typing import List, Optional, Tuple, Union
 
@@ -23,7 +21,6 @@ from tqdm import tqdm
 
 import legacy
 
-#----------------------------------------------------------------------------
 
 def layout_grid(img, grid_w=None, grid_h=1, float_to_uint8=True, chw_to_hwc=True, to_numpy=True):
     batch_size, channels, img_h, img_w = img.shape
@@ -41,9 +38,8 @@ def layout_grid(img, grid_w=None, grid_h=1, float_to_uint8=True, chw_to_hwc=True
         img = img.cpu().numpy()
     return img
 
-#----------------------------------------------------------------------------
 
-def gen_interp_video(G, mp4: str, seeds, shuffle_seed=None, w_frames=60*4, kind='cubic', grid_dims=(1,1), num_keyframes=None, wraps=2, psi=1.0, device=torch.device('cuda'), **video_kwargs):
+def gen_interp_video(G, mp4: str, seeds, shuffle_seed=None, w_frames=60*4, kind='cubic', grid_dims=(1, 1), num_keyframes=None, wraps=2, psi=1.0, device=torch.device('cuda'), **video_kwargs):
     grid_w = grid_dims[0]
     grid_h = grid_dims[1]
 
@@ -89,14 +85,14 @@ def gen_interp_video(G, mp4: str, seeds, shuffle_seed=None, w_frames=60*4, kind=
         video_out.append_data(layout_grid(torch.stack(imgs), grid_w=grid_w, grid_h=grid_h))
     video_out.close()
 
-#----------------------------------------------------------------------------
 
 def parse_range(s: Union[str, List[int]]) -> List[int]:
-    '''Parse a comma separated list of numbers or ranges and return a list of ints.
+    """Parse a comma separated list of numbers or ranges and return a list of ints.
 
     Example: '1,2,5-10' returns [1, 2, 5, 6, 7]
-    '''
-    if isinstance(s, list): return s
+    """
+    if isinstance(s, list):
+        return s
     ranges = []
     range_re = re.compile(r'^(\d+)-(\d+)$')
     for p in s.split(','):
@@ -107,22 +103,20 @@ def parse_range(s: Union[str, List[int]]) -> List[int]:
             ranges.append(int(p))
     return ranges
 
-#----------------------------------------------------------------------------
 
 def parse_tuple(s: Union[str, Tuple[int,int]]) -> Tuple[int, int]:
-    '''Parse a 'M,N' or 'MxN' integer tuple.
+    """Parse a 'M,N' or 'MxN' integer tuple.
 
     Example:
         '4x2' returns (4,2)
         '0,1' returns (0,1)
-    '''
+    """
     if isinstance(s, tuple): return s
     m = re.match(r'^(\d+)[x,](\d+)$', s)
     if m:
-        return (int(m.group(1)), int(m.group(2)))
+        return int(m.group(1)), int(m.group(2))
     raise ValueError(f'cannot parse tuple {s}')
 
-#----------------------------------------------------------------------------
 
 @click.command()
 @click.option('--network', 'network_pkl', help='Network pickle filename', required=True)
@@ -169,13 +163,10 @@ def generate_images(
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
     with dnnlib.util.open_url(network_pkl) as f:
-        G = legacy.load_network_pkl(f)['G_ema'].to(device) # type: ignore
+        G = legacy.load_network_pkl(f)['G_ema'].to(device)  # type: ignore
 
     gen_interp_video(G=G, mp4=output, bitrate='12M', grid_dims=grid, num_keyframes=num_keyframes, w_frames=w_frames, seeds=seeds, shuffle_seed=shuffle_seed, psi=truncation_psi, device=device)
 
-#----------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    generate_images() # pylint: disable=no-value-for-parameter
-
-#----------------------------------------------------------------------------
+    generate_images()  # pylint: disable=no-value-for-parameter

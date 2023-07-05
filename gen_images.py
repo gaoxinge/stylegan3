@@ -20,14 +20,14 @@ import torch
 
 import legacy
 
-#----------------------------------------------------------------------------
 
 def parse_range(s: Union[str, List]) -> List[int]:
-    '''Parse a comma separated list of numbers or ranges and return a list of ints.
+    """Parse a comma separated list of numbers or ranges and return a list of ints.
 
     Example: '1,2,5-10' returns [1, 2, 5, 6, 7]
-    '''
-    if isinstance(s, list): return s
+    """
+    if isinstance(s, list):
+        return s
     ranges = []
     range_re = re.compile(r'^(\d+)-(\d+)$')
     for p in s.split(','):
@@ -38,23 +38,22 @@ def parse_range(s: Union[str, List]) -> List[int]:
             ranges.append(int(p))
     return ranges
 
-#----------------------------------------------------------------------------
 
 def parse_vec2(s: Union[str, Tuple[float, float]]) -> Tuple[float, float]:
-    '''Parse a floating point 2-vector of syntax 'a,b'.
+    """Parse a floating point 2-vector of syntax 'a,b'.
 
     Example:
         '0,1' returns (0,1)
-    '''
-    if isinstance(s, tuple): return s
+    """
+    if isinstance(s, tuple):
+        return s
     parts = s.split(',')
     if len(parts) == 2:
-        return (float(parts[0]), float(parts[1]))
+        return float(parts[0]), float(parts[1])
     raise ValueError(f'cannot parse 2-vector {s}')
 
-#----------------------------------------------------------------------------
 
-def make_transform(translate: Tuple[float,float], angle: float):
+def make_transform(translate: Tuple[float, float], angle: float):
     m = np.eye(3)
     s = np.sin(angle/360.0*np.pi*2)
     c = np.cos(angle/360.0*np.pi*2)
@@ -66,7 +65,6 @@ def make_transform(translate: Tuple[float,float], angle: float):
     m[1][2] = translate[1]
     return m
 
-#----------------------------------------------------------------------------
 
 @click.command()
 @click.option('--network', 'network_pkl', help='Network pickle filename', required=True)
@@ -106,7 +104,7 @@ def generate_images(
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     device = torch.device(device)
     with dnnlib.util.open_url(network_pkl) as f:
-        G = legacy.load_network_pkl(f)['G_ema'].to(device) # type: ignore
+        G = legacy.load_network_pkl(f)['G_ema'].to(device)  # type: ignore
 
     os.makedirs(outdir, exist_ok=True)
 
@@ -118,7 +116,7 @@ def generate_images(
         label[:, class_idx] = 1
     else:
         if class_idx is not None:
-            print ('warn: --class=lbl ignored when running on an unconditional network')
+            print('warn: --class=lbl ignored when running on an unconditional network')
 
     # Generate images.
     for seed_idx, seed in enumerate(seeds):
@@ -138,9 +136,5 @@ def generate_images(
         PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/seed{seed:04d}.png')
 
 
-#----------------------------------------------------------------------------
-
 if __name__ == "__main__":
-    generate_images() # pylint: disable=no-value-for-parameter
-
-#----------------------------------------------------------------------------
+    generate_images()  # pylint: disable=no-value-for-parameter
